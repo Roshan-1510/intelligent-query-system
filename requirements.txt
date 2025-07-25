@@ -1,3 +1,5 @@
+# requirements.txt
+
 # API Framework
 fastapi
 uvicorn[standard]
@@ -13,6 +15,7 @@ eml-parser
 
 # LangChain and Google AI Integration
 langchain
+langchain-community  # <-- ADD THIS LINE
 langchain-google-genai
 google-generativeai
 
