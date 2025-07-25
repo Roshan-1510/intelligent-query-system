@@ -1,0 +1,25 @@
+# API Framework
+fastapi
+uvicorn[standard]
+
+# Utilities
+python-dotenv
+requests
+
+# Document Processing
+pypdf
+python-docx
+eml-parser
+
+# LangChain and Google AI Integration
+langchain
+langchain-google-genai
+google-generativeai
+
+# Embeddings and Vector Store
+sentence-transformers
+faiss-cpu
+
+# Database
+sqlalchemy
+psycopg2-binary
