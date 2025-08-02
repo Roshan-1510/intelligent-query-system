@@ -224,17 +224,12 @@ Pull requests are highly welcome!
 
 ---
 
-## 📄 License
-
-This project is **MIT licensed**. See [`LICENSE`](LICENSE) for full details.
-
----
 
 ## 👨‍💻 Author
 
 **Roshan Vishwakarma**  
 [GitHub: Roshan-1510](https://github.com/Roshan-1510)  
-📧 roshanv.official1510@gmail.com
+📧 roshanvishwakarma277@gmail.com
 
 ---
 
