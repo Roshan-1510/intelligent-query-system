@@ -1,10 +1,39 @@
 # Environment variables
 .env
+.env.*
+!.env.example
 
-# Python cache
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Python cache files
 __pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
 *.pyc
 
-# Virtual environment folder (if you use one)
+# Virtual environments
 venv/
+env/
 .venv/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Log files
+*.log
+logs/
+
+# Test results
+test_results.json
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/

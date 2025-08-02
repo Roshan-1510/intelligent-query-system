@@ -1,85 +1,129 @@
-# main.py
-import os
+from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field, validator
+from typing import List, Optional, Dict, Any
+import time
 import logging
-import json
-from fastapi import FastAPI, Depends, HTTPException, Security
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel, HttpUrl
-from typing import List, Dict, Any
-from sqlalchemy.orm import Session
-from dotenv import load_dotenv
+import traceback
+from fastapi.responses import JSONResponse
+from config import settings  # Corrected import
+from models import DocumentIngestRequest, IngestResponse, QueryRequest, QueryResponse, ErrorResponse, HealthResponse, MultiQueryRequest, MultiQueryResponse, QuestionAnswer  # Import models
+from vector_store import vector_index  # Import vector_index
+from llm import get_llm_chain, query_multiple_questions  # Import get_llm_chain and query_multiple_questions
+from utils import extract_text_from_url, clean_text, get_system_info  # Import utils functions
+from langchain.text_splitter import RecursiveCharacterTextSplitter  # Import text splitter
+from langchain.schema import Document  # Import Document
+from auth import verify_api_key  # Import authentication
+from query_engine import process_query_batch  # Import batch function
+from models import DocumentInfo  # Or wherever it's defined
+from datetime import datetime
 
-from query_engine import IntelligentQueryEngine
-from database import get_db, QueryLog
+app = FastAPI()
+logger = logging.getLogger(__name__)
 
-load_dotenv()
+@app.get("/health", response_model=HealthResponse, responses={401: {"model": ErrorResponse}})
+def health_check(request: Request, api_key: str = Depends(verify_api_key)):
+    try:
+        print("🔍 Health check called.")
+        sys_info = get_system_info()
+        print(f"✅ System info: {sys_info}")
 
-# --- Configuration ---
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-AUTH_TOKEN = "7609610f76f0b4b9e6b16db3e3fab7752a9fb25593df76ca443a60eca02020e9"
-security = HTTPBearer()
+        return HealthResponse(
+            status="ok",
+            timestamp=time.strftime('%Y-%m-%dT%H:%M:%SZ'),
+            models_loaded={"llm": True, "embeddings": True},
+            cache_status={},
+            system_info=sys_info
+        )
+    except Exception as e:
+        print("❌ Exception in /health:")
+        traceback.print_exc()
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Health check failed: {str(e)}"}
+        )
 
-# --- UPDATED: Pydantic Models for a more systematic response ---
-class QueryResult(BaseModel):
-    question: str
-    answer: str
+@app.post("/ingest", response_model=IngestResponse, responses={400: {"model": ErrorResponse}, 401: {"model": ErrorResponse}})
+def ingest_document(request: DocumentIngestRequest, api_key: str = Depends(verify_api_key)):
+    start = time.time()
+    try:
+        raw_text, metadata = extract_text_from_url([request.url])
+        cleaned = clean_text(raw_text)
+        splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=300)
+        docs = splitter.create_documents([cleaned])
+        vector_index.add_documents(docs)
+        return IngestResponse(
+             status="success",
+           message="Document ingested successfully",
+          doc_info=DocumentInfo(  # ✅ Use the actual Pydantic model
+          doc_id=request.doc_id,
+          url=request.url,
+          chunk_count=len(docs),
+          ingested_at=datetime.utcnow(),
+          metadata=metadata if isinstance(metadata, dict) else metadata[0]  # ✅ Ensure it's a dict
+    ),
+    processing_time=round(time.time() - start, 2)
+)
 
-class HackRxRequest(BaseModel):
-    documents: HttpUrl
-    questions: List[str]
+    except Exception as e:
+        logger.exception("Ingestion failed")
+        raise HTTPException(status_code=400, detail=str(e))
 
-class HackRxResponse(BaseModel):
-    results: List[QueryResult]
+@app.post("/query", response_model=List[QueryResponse], responses={400: {"model": ErrorResponse}, 401: {"model": ErrorResponse}})
+def query_docs(request: QueryRequest, api_key: str = Depends(verify_api_key)):
+    start = time.time()
+    try:
+        chain = get_llm_chain()
+        responses = []
 
-# --- FastAPI Application ---
-app = FastAPI(title="Intelligent Query-Retrieval System", version="1.0.0")
+        for question in request.questions:
+            docs = vector_index.search(question, k=request.max_docs or 3)
+            result = chain.run(input_documents=docs, question=question)
+            responses.append(QueryResponse(
+                question=question,
+                answer=result,
+                model_used=settings.llm_model,
+                doc_ids_searched=[
+                    doc.metadata.get("doc_id") for doc in docs if doc.metadata.get("doc_id") is not None
+                ],
+                sources=[{"text": d.page_content[:300]} for d in docs],
+                context_used="\n---\n".join(d.page_content[:500] for d in docs),
+                processing_time=round(time.time() - start, 2)
+            ))
 
-query_engine: IntelligentQueryEngine = None
+        return responses
 
-def verify_token(credentials: HTTPAuthorizationCredentials = Security(security)):
-    if credentials.scheme != "Bearer" or credentials.credentials != AUTH_TOKEN:
-        raise HTTPException(status_code=403, detail="Invalid or missing authentication token")
 
-def get_query_engine():
-    global query_engine
-    if query_engine is None:
-        logging.info("First request received. Initializing the IntelligentQueryEngine...")
-        query_engine = IntelligentQueryEngine()
-        if not query_engine.llm:
-            raise HTTPException(status_code=503, detail="Service Unavailable: Models could not be initialized.")
-    return query_engine
+    except Exception as e:
+        logger.exception("Query failed")
+        raise HTTPException(status_code=400, detail=str(e))
 
-@app.post("/api/v1/hackrx/run", response_model=HackRxResponse, dependencies=[Depends(verify_token)])
-async def run_submission(
-    request: HackRxRequest, 
-    db: Session = Depends(get_db),
-    engine: IntelligentQueryEngine = Depends(get_query_engine)
-):
-    success = engine.process_document_from_url(str(request.documents))
-    if not success:
-        raise HTTPException(status_code=400, detail="Failed to process document. Check URL/format.")
 
-    final_results = []
-    for question in request.questions:
-        answer = engine.answer_question(question)
-        if isinstance(answer, dict) and "error" in answer:
-            # If there's an error, still return it in the structured format
-            final_results.append(QueryResult(question=question, answer=f"Error: {answer['error']}"))
-        else:
-            final_results.append(QueryResult(question=question, answer=answer))
-    
-    # Log the structured results to the database
-    log_entry = QueryLog(
-        document_url=str(request.documents),
-        questions=json.dumps({"questions": request.questions}),
-        # Convert Pydantic models to dicts for JSON serialization
-        answers=json.dumps({"results": [res.dict() for res in final_results]})
-    )
-    db.add(log_entry); db.commit()
-    logging.info("Successfully logged request to the database.")
+@app.post("/hackrx/run", response_class=JSONResponse, responses={400: {"model": ErrorResponse}, 401: {"model": ErrorResponse}})
+def multi_query_docs(request: MultiQueryRequest, api_key: str = Depends(verify_api_key)):
+    start = time.time()
+    try:
+        # Process queries with ultra-optimized settings for speed
+        results = process_query_batch(
+            request.documents, 
+            request.questions, 
+            request.max_docs or 2,  # Default to 2 for maximum speed
+            request.include_context
+        )
 
-    return HackRxResponse(results=final_results)
+        # Convert to QuestionAnswer format for compatibility
+        question_answers = [
+            QuestionAnswer(
+                question=request.questions[i],
+                answer=results["answers"][i],
+                error=None
+            ) for i in range(len(request.questions))
+        ]
 
-@app.get("/")
-def health_check():
-    return {"status": "ok", "message": "API is running."}
+        return {
+            "answers": [qa.answer for qa in question_answers]
+        }
+
+    except Exception as e:
+        logger.exception("Multi-query failed")
+        raise HTTPException(status_code=400, detail=f"Failed to process document. Check URL/format. Error: {str(e)}")
