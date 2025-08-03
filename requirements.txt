@@ -1,29 +1,10 @@
-# Web framework
 fastapi
-uvicorn[standard]
-python-multipart
-
-# LangChain + LLM
-langchain
-langchain-openai
-langchain-community
-langchain-core
-langchain-text-splitters
-
-# Embeddings + Light Vector DB
-faiss-cpu
-sentence-transformers
-tiktoken
-openai
-
-# PDF/Text Processing
-PyPDF2
-requests
-beautifulsoup4
-
-# Utilities
-python-dotenv
-aiofiles
+uvicorn
 httpx
-psutil
-rich
+python-multipart
+pydantic
+requests
+bs4
+sentence-transformers==2.2.2
+faiss-cpu==1.7.4
+python-dotenv
