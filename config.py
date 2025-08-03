@@ -1,54 +1,56 @@
 import os
 from pathlib import Path
+from typing import Optional, List
 from pydantic_settings import BaseSettings
-from typing import Optional
+from pydantic import Field
 
-# Import torch for CUDA availability check
+# Optional: CUDA availability check
 try:
     import torch
 except ImportError:
     torch = None
 
+
 class Settings(BaseSettings):
-    """Application settings loaded from environment variables"""
+    """App settings loaded from environment variables or defaults"""
 
-    # API Configuration
-    openrouter_api_key: Optional[str] = None
-    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    # API Keys
+    openrouter_api_key: Optional[str] = Field(default=None, env="OPENROUTER_API_KEY")
 
-    # Model Configuration
-    llm_model: str = "anthropic/claude-3-haiku"
-    llm_temperature: float = 0.1
-    llm_max_tokens: int = 150
+    # LLM Configuration
+    openrouter_base_url: str = Field(default="https://openrouter.ai/api/v1", env="OPENROUTER_BASE_URL")
+    llm_model: str = Field(default="anthropic/claude-3-haiku", env="LLM_MODEL")
+    llm_temperature: float = Field(default=0.1, env="LLM_TEMPERATURE")
+    llm_max_tokens: int = Field(default=150, env="LLM_MAX_TOKENS")
 
-    # Embedding Configuration
-    embedding_model: str = "intfloat/e5-small"  # ✅ Switched for lower memory usage
-    embedding_device: str = "cpu"  # Set to "cuda" if GPU available
+    # Embedding Model
+    embedding_model: str = Field(default="intfloat/e5-small", env="EMBEDDING_MODEL")
+    embedding_device: str = Field(default="cpu", env="EMBEDDING_DEVICE")  # "cuda" or "cpu"
 
     # Document Processing
-    chunk_size: int = 500
-    chunk_overlap: int = 50
-    max_docs_for_context: int = 2
+    chunk_size: int = Field(default=500, env="CHUNK_SIZE")
+    chunk_overlap: int = Field(default=50, env="CHUNK_OVERLAP")
+    max_docs_for_context: int = Field(default=2, env="MAX_DOCS_FOR_CONTEXT")
 
     # Caching
-    enable_cache: bool = True
-    cache_dir: str = "cache"
-    cache_ttl_hours: int = 24
+    enable_cache: bool = Field(default=True, env="ENABLE_CACHE")
+    cache_dir: str = Field(default="cache", env="CACHE_DIR")
+    cache_ttl_hours: int = Field(default=24, env="CACHE_TTL_HOURS")
 
-    # File Upload Limits
-    max_file_size_mb: int = 10
-    allowed_file_types: list = [".pdf", ".txt", ".md", ".docx"]
+    # File Upload
+    max_file_size_mb: int = Field(default=10, env="MAX_FILE_SIZE_MB")
+    allowed_file_types: List[str] = Field(default=[".pdf", ".txt", ".md", ".docx"], env="ALLOWED_FILE_TYPES")
 
-    # Server Configuration
-    host: str = "0.0.0.0"
-    port: int = 8000
-    debug: bool = True
+    # Server Config
+    host: str = Field(default="0.0.0.0", env="HOST")
+    port: int = Field(default=8000, env="PORT")
+    debug: bool = Field(default=True, env="DEBUG")
 
     # Logging
-    log_level: str = os.environ.get("LOG_LEVEL", "INFO")
-    log_dir: str = "logs"
+    log_level: str = Field(default="INFO", env="LOG_LEVEL")
+    log_dir: str = Field(default="logs", env="LOG_DIR")
 
-    # Directories
+    # Project Directory
     base_dir: Path = Path(__file__).parent
 
     class Config:
@@ -62,9 +64,8 @@ class Settings(BaseSettings):
         self.create_directories()
 
     def create_directories(self):
-        directories = [self.cache_dir, self.log_dir]
-        for directory in directories:
-            Path(directory).mkdir(exist_ok=True)
+        for directory in [self.cache_dir, self.log_dir]:
+            Path(directory).mkdir(parents=True, exist_ok=True)
 
     @property
     def cache_path(self) -> Path:
@@ -74,20 +75,21 @@ class Settings(BaseSettings):
     def log_path(self) -> Path:
         return Path(self.log_dir)
 
-# Global settings instance
+
+# Load settings
 settings = Settings()
 
-# Check OpenRouter key
+# Safety checks
 if not settings.openrouter_api_key:
     print("⚠️  WARNING: OPENROUTER_API_KEY not found!")
     print("   Running with HuggingFace models only.")
 else:
-    print(f"✅ OpenRouter API key loaded: {settings.openrouter_api_key[:5]}...{settings.openrouter_api_key[-5:]}")
+    print(f"✅ OpenRouter key loaded: {settings.openrouter_api_key[:5]}...{settings.openrouter_api_key[-5:]}")
 
-# Check CUDA availability
-if settings.embedding_device == "cuda" and torch and not torch.cuda.is_available():
-    print("⚠️  WARNING: CUDA selected but no GPU found. Switching to CPU.")
-    settings.embedding_device = "cpu"
-elif settings.embedding_device == "cuda" and not torch:
-    print("⚠️  WARNING: CUDA selected but torch not installed. Switching to CPU.")
-    settings.embedding_device = "cpu"
+if settings.embedding_device == "cuda":
+    if torch and not torch.cuda.is_available():
+        print("⚠️  WARNING: CUDA selected but no GPU found. Switching to CPU.")
+        settings.embedding_device = "cpu"
+    elif not torch:
+        print("⚠️  WARNING: CUDA selected but torch not installed. Switching to CPU.")
+        settings.embedding_device = "cpu"
