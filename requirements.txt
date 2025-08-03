@@ -11,6 +11,9 @@ langchain-core
 langchain-community
 langchainhub
 
+sentence-transformers
+
+
 transformers
 torch
 faiss-cpu
