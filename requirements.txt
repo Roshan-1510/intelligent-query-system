@@ -7,5 +7,5 @@ requests
 bs4
 sentence-transformers==2.3.1
 faiss-cpu==1.11.0
-sentencepiece==0.1.99
 python-dotenv
+sentencepiece==0.1.96  # use stable version that works with Python 3.10
