@@ -1,9 +1,7 @@
 services:
   - type: web
-    name: intelligent-query-system
-    env: python
-    buildCommand: |
-      pip install --upgrade pip setuptools wheel
-      pip install -r requirements.txt
-    startCommand: uvicorn run:app --host 0.0.0.0 --port 8000
-    runtime: python
+    name: hackrx-docqa
+    env: docker
+    plan: free
+    region: oregon
+    autoDeploy: true
