@@ -1,49 +1,29 @@
-# Core backend
+# Web framework
 fastapi
 uvicorn[standard]
 python-multipart
-pydantic
-pydantic-settings
-python-dotenv
 
-# LangChain + LLMs
+# LangChain + LLM
 langchain
+langchain-openai
 langchain-community
 langchain-core
-langchain-openai
-langchain-huggingface
 langchain-text-splitters
-openai
-tiktoken
 
-# Embeddings & vector search
+# Embeddings + Light Vector DB
 faiss-cpu
 sentence-transformers
+tiktoken
+openai
 
-# Document handling
+# PDF/Text Processing
 PyPDF2
-pypdf
-pymupdf
-pdfplumber
-python-docx
-python-magic
-eml_parser
-
-# NLP & transformers
-nltk
-transformers
-scikit-learn
-torch
-
-# Utilities
 requests
 beautifulsoup4
-httpx
+
+# Utilities
+python-dotenv
 aiofiles
+httpx
 psutil
 rich
-
-# Optional extras for observability / logging
-tenacity
-aiohttp
-httpx-sse
