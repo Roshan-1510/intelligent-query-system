@@ -2,12 +2,19 @@ services:
   - type: web
     name: bajajhack-api
     env: python
+
+    # Ensure Python version compatibility (optional but recommended)
     buildCommand: |
       pip install -r requirements.txt
+
+    # Start your FastAPI app with Uvicorn
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+
     envVars:
-      - key: OPENROUTER_API_KEY
-        sync: false
-      - key: API_KEY
+      - key: OPENROUTER_API_KEY   # Your LangChain/OpenRouter model key
+        sync: false               # Prevents storing sensitive key in YAML
+      - key: API_KEY              # Custom internal key (you’re using in Bearer token)
         value: 7609610f76f0b4b9e6b16db3e3fab7752a9fb25593df76ca443a60eca02020e9
+
+    # Optional but good for observability
     healthCheckPath: /health
