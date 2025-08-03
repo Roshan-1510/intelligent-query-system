@@ -16,24 +16,19 @@ class Settings(BaseSettings):
     openrouter_api_key: Optional[str] = None
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
 
-    # Model Configuration - Using free models
-    # Free models available on OpenRouter:
-    # - "openai/gpt-3.5-turbo" (free tier)
-    # - "anthropic/claude-3-haiku" (free tier)
-    # - "meta-llama/llama-2-7b-chat" (free)
-    # - "mistralai/mistral-7b-instruct" (free)
-    llm_model: str = "anthropic/claude-3-haiku"  # Free model
-    llm_temperature: float = 0.1  # Lower for faster responses
-    llm_max_tokens: int = 150  # Reduced for speed
+    # Model Configuration
+    llm_model: str = "anthropic/claude-3-haiku"
+    llm_temperature: float = 0.1
+    llm_max_tokens: int = 150
 
-    # Embedding Configuration (Free HuggingFace model)
-    embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
-    embedding_device: str = "cpu"  # Change to "cuda" if you have GPU
+    # Embedding Configuration
+    embedding_model: str = "intfloat/e5-small"  # ✅ Switched for lower memory usage
+    embedding_device: str = "cpu"  # Set to "cuda" if GPU available
 
-    # Document Processing - Optimized for speed
-    chunk_size: int = 500  # Reduced for faster processing
-    chunk_overlap: int = 50  # Minimal overlap
-    max_docs_for_context: int = 2  # Reduced for speed
+    # Document Processing
+    chunk_size: int = 500
+    chunk_overlap: int = 50
+    max_docs_for_context: int = 2
 
     # Caching
     enable_cache: bool = True
@@ -50,7 +45,7 @@ class Settings(BaseSettings):
     debug: bool = True
 
     # Logging
-    log_level: str = os.environ.get("LOG_LEVEL", "INFO")  # Added default value
+    log_level: str = os.environ.get("LOG_LEVEL", "INFO")
     log_dir: str = "logs"
 
     # Directories
@@ -64,44 +59,35 @@ class Settings(BaseSettings):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # Create necessary directories
         self.create_directories()
 
     def create_directories(self):
-        """Create necessary directories if they don't exist"""
         directories = [self.cache_dir, self.log_dir]
         for directory in directories:
             Path(directory).mkdir(exist_ok=True)
 
     @property
     def cache_path(self) -> Path:
-        """Get the cache directory path"""
         return Path(self.cache_dir)
 
     @property
     def log_path(self) -> Path:
-        """Get the log directory path"""
         return Path(self.log_dir)
 
 # Global settings instance
 settings = Settings()
 
-# Validate OpenRouter API key
+# Check OpenRouter key
 if not settings.openrouter_api_key:
-    print("⚠️  WARNING: OPENROUTER_API_KEY not found in environment variables!")
-    print("   The system will work with HuggingFace models only.")
-    print("   For better performance, get a free API key from https://openrouter.ai")
+    print("⚠️  WARNING: OPENROUTER_API_KEY not found!")
+    print("   Running with HuggingFace models only.")
 else:
-    print(f"✅ OpenRouter API key found: {settings.openrouter_api_key[:5]}...{settings.openrouter_api_key[-5:]}")
-    # For testing, we'll use a mock response instead of calling the actual API
-    # This will prevent errors when the API key is invalid or the API is unavailable
+    print(f"✅ OpenRouter API key loaded: {settings.openrouter_api_key[:5]}...{settings.openrouter_api_key[-5:]}")
 
-# Validate embedding device
+# Check CUDA availability
 if settings.embedding_device == "cuda" and torch and not torch.cuda.is_available():
-    print("⚠️  WARNING: CUDA selected as embedding device, but no GPU found.")
-    print("   Changing embedding device to CPU.")
+    print("⚠️  WARNING: CUDA selected but no GPU found. Switching to CPU.")
     settings.embedding_device = "cpu"
 elif settings.embedding_device == "cuda" and not torch:
-    print("⚠️  WARNING: CUDA selected but torch not installed.")
-    print("   Changing embedding device to CPU.")
+    print("⚠️  WARNING: CUDA selected but torch not installed. Switching to CPU.")
     settings.embedding_device = "cpu"
