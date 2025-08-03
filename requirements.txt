@@ -5,6 +5,6 @@ python-multipart
 pydantic
 requests
 bs4
-sentence-transformers==2.2.2
+sentence-transformers==2.3.1
 faiss-cpu==1.7.4
 python-dotenv
