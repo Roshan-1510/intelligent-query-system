@@ -22,3 +22,4 @@ tiktoken
 beautifulsoup4
 requests
 psutil
+PyPDF2
