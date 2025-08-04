@@ -21,6 +21,9 @@ langchain-core
 langchain-community
 langchainhub
 
+# Required by sentence-transformers
+torch==2.0.1
+
 # Embeddings & vector search
 sentence-transformers>=2.2,<2.3
 transformers>=4.30,<4.50
