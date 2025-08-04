@@ -1,25 +1,16 @@
+# FastAPI & related tools
 fastapi
 uvicorn
 httpx
 python-multipart
 python-dotenv
+
+# Pydantic settings
 pydantic
 pydantic-settings
 
-langchain
-langchain-core
-langchain-community
-langchainhub
-
-sentence-transformers>=2.2,<2.3
-transformers>=4.30,<4.50
-faiss-cpu==1.7.4
-
-openai
-tiktoken
-
+# Web scraping & utilities
 beautifulsoup4
 requests
 psutil
 PyPDF2
-nltk
