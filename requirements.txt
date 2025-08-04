@@ -14,3 +14,16 @@ beautifulsoup4
 requests
 psutil
 PyPDF2
+
+# LangChain and ecosystem
+langchain
+langchain-core
+langchain-community
+langchainhub
+
+# Embeddings & vector search
+sentence-transformers>=2.2,<2.3
+transformers>=4.30,<4.50
+faiss-cpu==1.7.4
+nltk
+
