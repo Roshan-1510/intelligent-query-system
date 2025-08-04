@@ -1,0 +1,35 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Logs and debug
+*.log
+
+# Environment and virtual env
+.env
+.env.*
+venv/
+.venv/
+
+# Build and cache directories
+build/
+dist/
+.cache/
+*.egg-info/
+
+# Git & IDE
+.git/
+.gitignore
+*.swp
+*.swo
+*.bak
+.DS_Store
+.idea/
+.vscode/
+
+# Docker files not needed inside image
+docker-compose.yml
+Dockerfile
+*.md
