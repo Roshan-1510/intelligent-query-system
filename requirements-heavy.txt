@@ -1,8 +1,11 @@
-# Sentence/embedding/vector libraries
+# LangChain and ecosystem
+langchain
+langchain-core
+langchain-community
+langchainhub
+
+# Embeddings & vector search
 sentence-transformers>=2.2,<2.3
 transformers>=4.30,<4.50
 faiss-cpu==1.7.4
 nltk
-
-# Optional: Include torch if NOT installing separately in Dockerfile
-# torch==2.0.1+cpu  # Commented out if you install via URL in Dockerfile
