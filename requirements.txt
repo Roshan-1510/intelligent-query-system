@@ -11,10 +11,9 @@ langchain-core
 langchain-community
 langchainhub
 
-sentence-transformers
-transformers
-torch
-faiss-cpu
+sentence-transformers>=2.2,<2.3
+transformers>=4.30,<4.50
+faiss-cpu==1.7.4
 
 openai
 tiktoken
@@ -24,4 +23,3 @@ requests
 psutil
 PyPDF2
 nltk
-
