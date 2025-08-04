@@ -22,10 +22,13 @@ RUN pip install --no-cache-dir torch==2.0.1+cpu -f https://download.pytorch.org/
 
 # Copy requirement files
 COPY requirements.txt .
+COPY requirements-heavy.txt .
+
 
 # Install requirements in chunks to avoid memory overload
 RUN pip install --no-cache-dir --upgrade pip==23.3.1
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements-heavy.txt
 
 # Copy the rest of the code
 COPY . .
