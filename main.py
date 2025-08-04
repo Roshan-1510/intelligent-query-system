@@ -21,6 +21,10 @@ from datetime import datetime
 app = FastAPI()
 logger = logging.getLogger(__name__)
 
+@app.get("/")
+def read_root():
+    return {"message": "Hello from Google App Engine!"}
+
 @app.get("/health", response_model=HealthResponse, responses={401: {"model": ErrorResponse}})
 def health_check(request: Request, api_key: str = Depends(verify_api_key)):
     try:
