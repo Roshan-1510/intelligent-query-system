@@ -1,7 +1,0 @@
-services:
-  - type: web
-    name: hackrx-docqa
-    env: docker
-    plan: free
-    region: oregon
-    autoDeploy: true
