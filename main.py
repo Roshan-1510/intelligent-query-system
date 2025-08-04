@@ -8,8 +8,8 @@ import traceback
 from fastapi.responses import JSONResponse
 from config import settings  # Corrected import
 from models import DocumentIngestRequest, IngestResponse, QueryRequest, QueryResponse, ErrorResponse, HealthResponse, MultiQueryRequest, MultiQueryResponse, QuestionAnswer  # Import models
-from vector_store import vector_index  # Import vector_index
-from llm import get_llm_chain, query_multiple_questions  # Import get_llm_chain and query_multiple_questions
+# from vector_store import vector_index  # Import vector_index
+from llm import query_multiple_questions  # Import get_llm_chain and query_multiple_questions
 from utils import extract_text_from_url, clean_text, get_system_info  # Import utils functions
 from langchain.text_splitter import RecursiveCharacterTextSplitter  # Import text splitter
 from langchain.schema import Document  # Import Document
@@ -46,6 +46,7 @@ def health_check(request: Request, api_key: str = Depends(verify_api_key)):
 @app.post("/ingest", response_model=IngestResponse, responses={400: {"model": ErrorResponse}, 401: {"model": ErrorResponse}})
 def ingest_document(request: DocumentIngestRequest, api_key: str = Depends(verify_api_key)):
     start = time.time()
+    from vector_store import vector_index # Import vector_index here to avoid circular import issues
     try:
         raw_text, metadata = extract_text_from_url([request.url])
         cleaned = clean_text(raw_text)
@@ -72,6 +73,9 @@ def ingest_document(request: DocumentIngestRequest, api_key: str = Depends(verif
 @app.post("/query", response_model=List[QueryResponse], responses={400: {"model": ErrorResponse}, 401: {"model": ErrorResponse}})
 def query_docs(request: QueryRequest, api_key: str = Depends(verify_api_key)):
     start = time.time()
+    from vector_store import vector_index
+    from llm import get_llm_chain  # Import get_llm_chain here to avoid circular import issues
+
     try:
         chain = get_llm_chain()
         responses = []
