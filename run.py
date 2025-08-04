@@ -1,14 +1,13 @@
-# run.py - Entrypoint to start the FastAPI server
-
+import os
 import uvicorn
 from config import settings
 
 if __name__ == "__main__":
-    # Explicitly set port to 8000
+    port = int(os.environ.get("PORT", 8000))  # uses 8000 locally, dynamic PORT in prod
     uvicorn.run(
-        "main:app",  # main.py must contain `app = FastAPI()`
-        host=settings.host,
-        port=8000,
+        "main:app",
+        host="0.0.0.0",
+        port=port,
         reload=True if settings.debug else False,
         log_level=settings.log_level.lower()
     )
